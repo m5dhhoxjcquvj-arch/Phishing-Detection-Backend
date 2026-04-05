@@ -4,17 +4,17 @@ import numpy as np
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-# 1. أولاً: تعريف التطبيق (هذا اللي كان ناقص في السطر الأول)
+# 1. تعريف التطبيق (لازم يكون فوق)
 app = Flask(__name__)
 CORS(app)
 
-# 2. تحميل الموديل (مع معالجة الخطأ إذا مو موجود)
+# 2. تحميل الموديل (إذا فشل بيكمل السيرفر بالوضع الاحتياطي)
 try:
     model = joblib.load('phishing_model.pkl')
     print("✅ Model Loaded Successfully")
-except Exception as e:
+except:
     model = None
-    print(f"❌ Error loading model: {e}")
+    print("⚠️ Model not loaded, using basic rules")
 
 @app.route('/')
 def home():
@@ -24,20 +24,22 @@ def home():
 def predict():
     try:
         data = request.get_json()
+        # تنظيف الرابط وتحويله لأحرف صغيرة لضمان الدقة
         url = str(data.get('url', '')).lower().strip()
         
-        # قائمة الحصانة الفورية (يوتيوب وجوجل)
-        whitelist = ['youtube', 'youtu', 'watch', 'google', 'hotmail', 'outlook', 'mail']
+        # --- قائمة الحصانة الفورية (Whitelist) ---
+        # أي رابط يحتوي على هذه الكلمات سيعتبر آمن فوراً
+        whitelist = ['youtube.com', 'youtu.be', 'google.com', 'outlook', 'hotmail', 'gmail']
         if any(word in url for word in whitelist):
             return jsonify({'result': 'Safe'})
 
-        # فحص الذكاء الاصطناعي
+        # --- فحص الذكاء الاصطناعي ---
         if model:
             features = np.array([[len(url)]])
             prediction = model.predict(features)
             result = "Phishing" if prediction[0] == 1 else "Safe"
         else:
-            # خطة بديلة لو الموديل ما تحمل
+            # وضع احتياطي في حال تعطل الموديل
             result = "Phishing" if len(url) > 150 else "Safe"
             
         return jsonify({'result': result})
