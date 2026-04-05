@@ -1,41 +1,43 @@
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import urllib.parse
+import tldextract
 
 app = Flask(__name__)
 CORS(app)
 
 @app.route('/')
 def home():
-    return "Phishing Detector - Final Version"
+    return "Security Engine - Hotmail Ready!"
 
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
         data = request.get_json()
-        raw_input = data.get('url', '')
+        url = data.get('url', '').lower().strip()
         
-        # 1. تنظيف الرابط من التشفير (مثلاً %20 يرجع مسافة)
-        # وتحويله لحروف صغيرة
-        url = urllib.parse.unquote(raw_input).lower().strip()
-        
-        # 2. القائمة الذهبية (أول شيء ينفذه السيرفر)
-        # إذا لقى أي كلمة من هذي الكلمات، يعطي Safe فوراً ويسحب على الباقي
-        safe_words = ['youtube', 'youtu.be', 'google', 'tiktok', 'speedtest', 'facebook', 'instagram']
-        
-        for word in safe_words:
-            if word in url:
-                return jsonify({'result': 'Safe'})
+        # استخراج اسم الموقع الحقيقي (الدومين)
+        # مثلاً: https://outlook.live.com بيطلع منها كلمة 'outlook'
+        ext = tldextract.extract(url)
+        domain = ext.domain 
 
-        # 3. فحص الروابط المجهولة (منطق أمني بسيط)
-        # إذا الرابط "غريب" جداً أو طويل بزيادة بدون ما يكون من المواقع المعروفة
-        suspicious_chars = ['@', '!!', 'login', 'verify', 'update-account']
+        # قائمة "الحصانة القصوى" للهوت ميل وجماعته
+        # أضفت لك كل مشتقات مايكروسوفت وجوجل
+        safe_domains = [
+            'outlook', 'hotmail', 'live', 'microsoft', 'msn', 
+            'google', 'gmail', 'youtube', 'youtu', 
+            'tiktok', 'facebook', 'instagram', 'speedtest'
+        ]
+
+        # فحص إذا كان الدومين موجود في القائمة
+        if domain in safe_domains:
+            return jsonify({'result': 'Safe'})
         
-        if any(char in url for char in suspicious_chars) or len(url) > 150:
+        # إذا الرابط مجهول (مو من الكبار) نطبق فحص أمني
+        # الروابط اللي فيها أرقام كثيرة أو رموز مريبة في الدومين
+        if len(url) > 150 or url.count('-') > 5:
             return jsonify({'result': 'Phishing'})
-        
-        # الافتراضي لأي رابط طبيعي
+            
         return jsonify({'result': 'Safe'})
 
     except Exception as e:
