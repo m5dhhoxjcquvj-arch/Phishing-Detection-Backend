@@ -8,34 +8,33 @@ CORS(app)
 
 @app.route('/')
 def home():
-    return "Security Engine - Hotmail Ready!"
+    return "Phishing Detector - Intelligent Guard is Live!"
 
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
         data = request.get_json()
-        url = data.get('url', '').lower().strip()
+        # 1. تنظيف الرابط من أي حروف غريبة في البداية أو النهاية (زي الشرطات والمساحات)
+        raw_url = data.get('url', '').strip().lower()
+        clean_url = raw_url.lstrip('/') # يمسح أي شرطة مائلة في البداية زي اللي في صورتك
         
-        # استخراج اسم الموقع الحقيقي (الدومين)
-        # مثلاً: https://outlook.live.com بيطلع منها كلمة 'outlook'
-        ext = tldextract.extract(url)
-        domain = ext.domain 
+        # 2. استخراج "الزبدة" من الرابط باستخدام tldextract
+        # حتى لو الرابط /watch?v=... بيعرف إنه تابع ليوتيوب
+        ext = tldextract.extract(clean_url)
+        domain = ext.domain
 
-        # قائمة "الحصانة القصوى" للهوت ميل وجماعته
-        # أضفت لك كل مشتقات مايكروسوفت وجوجل
-        safe_domains = [
-            'outlook', 'hotmail', 'live', 'microsoft', 'msn', 
-            'google', 'gmail', 'youtube', 'youtu', 
-            'tiktok', 'facebook', 'instagram', 'speedtest'
+        # القائمة البيضاء الذكية (شاملة للهوتميل ويوتيوب وكل الكبار)
+        trusted_brands = [
+            'youtube', 'youtu', 'google', 'outlook', 'hotmail', 
+            'live', 'microsoft', 'tiktok', 'speedtest', 'facebook'
         ]
 
-        # فحص إذا كان الدومين موجود في القائمة
-        if domain in safe_domains:
+        # 3. فحص الحصانة
+        if domain in trusted_brands or any(brand in clean_url for brand in trusted_brands):
             return jsonify({'result': 'Safe'})
         
-        # إذا الرابط مجهول (مو من الكبار) نطبق فحص أمني
-        # الروابط اللي فيها أرقام كثيرة أو رموز مريبة في الدومين
-        if len(url) > 150 or url.count('-') > 5:
+        # 4. منطق الحماية للروابط المجهولة
+        if len(clean_url) > 150 or clean_url.count('-') > 5:
             return jsonify({'result': 'Phishing'})
             
         return jsonify({'result': 'Safe'})
