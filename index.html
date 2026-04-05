@@ -2,49 +2,66 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>فاحص الروابط الذكي</title>
+    <title>كاشف الروابط الذكي</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: white; }
-        .card { background: white; color: #333; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center; width: 450px; }
-        h1 { color: #4a90e2; font-size: 28px; }
-        input { width: 100%; padding: 15px; margin: 20px 0; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
-        button { background: #4a90e2; color: white; border: none; padding: 15px 30px; border-radius: 10px; cursor: pointer; font-size: 18px; width: 100%; transition: 0.3s; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
+        .card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 100%; max-width: 450px; text-align: center; }
+        h1 { color: #4a90e2; margin-bottom: 10px; }
+        .description { color: #666; font-size: 15px; margin-bottom: 30px; }
+        input { width: 100%; padding: 15px; margin: 20px 0; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 14px; }
+        button { background: #4a90e2; color: white; border: none; padding: 15px 30px; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; transition: 0.3s; }
         button:hover { background: #357abd; transform: translateY(-2px); }
         #result { margin-top: 25px; padding: 15px; border-radius: 10px; font-weight: bold; display: none; }
-        .safe { background: #d4edda; color: #155724; }
-        .danger { background: #f8d7da; color: #721c24; }
+        .safe { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>🔍 كاشف الاحتيال الإلكتروني</h1>
-        <p>مشروع التخرج - نظام كشف روابط الفيشينج</p>
-        <input type="text" id="urlInput" placeholder="ضع الرابط هنا لفحصه...">
-        <button onclick="checkURL()">بدء الفحص الذكي</button>
-        <div id="result"></div>
-    </div>
 
-    <script>
-        function checkURL() {
-            const url = document.getElementById('urlInput').value;
-            const resultDiv = document.getElementById('result');
-            if(!url) return;
+<div class="card">
+    <h1>🔍 كاشف الاحتيال</h1>
+    <p class="description">مشروع التخرج - نظام كشف الروابط الاحتيالية</p>
+    
+    <input type="text" id="urlInput" placeholder="ضع الرابط هنا للفحص...">
+    <button onclick="checkURL()">بدء الفحص الذكي</button>
+    
+    <div id="result"></div>
+</div>
+
+<script>
+    async function checkURL() {
+        const url = document.getElementById('urlInput').value;
+        const resultDiv = document.getElementById('result');
+        
+        if (!url) return;
+
+        resultDiv.style.display = "block";
+        resultDiv.className = "";
+        resultDiv.innerHTML = "جاري تحليل الرابط...";
+
+        try {
+            // ملاحظة: تأكد من وضع رابط الـ Render الخاص بك هنا
+            const response = await fetch('https://phishing-detection-backend-s39h.onrender.com/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: url })
+            });
             
-            resultDiv.style.display = "block";
-            resultDiv.innerHTML = "جاري تحليل الرابط عبر الموديل...";
-            resultDiv.className = "";
+            const data = await response.json();
 
-            setTimeout(() => {
-                // محاكاة منطق الذكاء الاصطناعي
-                if(url.includes("login") || url.includes("verify") || url.length > 30) {
-                    resultDiv.innerHTML = "❌ تنبيه: هذا الرابط مشبوه (Phishing)!";
-                    resultDiv.className = "danger";
-                } else {
-                    resultDiv.innerHTML = "✅ الرابط آمن للاستخدام.";
-                    resultDiv.className = "safe";
-                }
-            }, 1500);
+            if (data.result === 'Safe') {
+                resultDiv.innerHTML = "✅ الرابط آمن للاستخدام";
+                resultDiv.className = "safe";
+            } else {
+                resultDiv.innerHTML = "❌ تنبيه: هذا الرابط مشبوه (Phishing)!";
+                resultDiv.className = "danger";
+            }
+        } catch (error) {
+            resultDiv.innerHTML = "⚠️ خطأ في الاتصال بالسيرفر";
+            resultDiv.className = "danger";
         }
-    </script>
+    }
+</script>
+
 </body>
 </html>
