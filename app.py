@@ -1,24 +1,9 @@
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import joblib
 
 app = Flask(__name__)
 CORS(app)
-
-# تحميل النموذج - تأكد أن اسم الملف مطابق لما رفعته في GitHub
-MODEL_PATH = 'phishing_model.pkl'
-
-try:
-    if os.path.exists(MODEL_PATH):
-        model = joblib.load(MODEL_PATH)
-        print("✅ تم تحميل النموذج بنجاح")
-    else:
-        model = None
-        print("❌ ملف النموذج غير موجود في المجلد")
-except Exception as e:
-    model = None
-    print(f"❌ خطأ في تحميل النموذج: {e}")
 
 @app.route('/')
 def home():
@@ -27,23 +12,23 @@ def home():
 @app.route('/predict', methods=['POST'])
 def predict():
     data = request.get_json()
-    url = data.get('url', '')
+    url = data.get('url', '').lower() # نحول الرابط لحروف صغيرة عشان الفحص
     
-    # هنا المنطق: إذا كان النموذج موجود، يفحص. إذا لا، يعطي نتيجة افتراضية
-    if model:
-        try:
-            # ملاحظة: طريقة الفحص تعتمد على كيف دربت نموذجك (هنا مثال بسيط)
-            prediction = model.predict([url]) 
-            result = "Phishing" if prediction[0] == 1 else "Safe"
-        except:
-            # إذا فشل النموذج في التحليل المباشر (لأنه يحتاج استخراج خصائص)
-            # بنخليه يعطي Safe حالياً للروابط المشهورة
-            if "youtube.com" in url or "google.com" in url:
-                result = "Safe"
-            else:
-                result = "Phishing"
+    # 1. القائمة البيضاء (الروابط الموثوقة 100%)
+    trusted_domains = ["youtube.com", "google.com", "gmail.com", "outlook.com", "microsoft.com", "apple.com"]
+    
+    # فحص إذا كان الرابط يحتوي على أي دومين موثوق
+    is_trusted = any(domain in url for domain in trusted_domains)
+
+    if is_trusted:
+        result = "Safe"
     else:
-        result = "Safe (Model not loaded)"
+        # 2. هنا "منطق" الفحص للروابط الثانية (مؤقتاً للبروجكت)
+        # إذا الرابط طويل جداً أو فيه رموز غريبة نعتبره مشبوه
+        if len(url) > 50 or url.count('@') > 0 or url.count('-') > 3:
+            result = "Phishing"
+        else:
+            result = "Safe"
 
     return jsonify({'result': result})
 
