@@ -16,8 +16,7 @@ def predict():
         url = str(data.get('url', '')).lower().strip()
         
         # قائمة الحصانة الفورية (أي كلمة هنا تعطي أخضر فورا)
-        if any(word in url for word in ['youtube', 'youtu', 'watch', 'google', 'hotmail', 'outlook', 'mail']):
-            return jsonify({'result': 'Safe'})
+      if any(word in url for word in ['youtube', 'youtu', 'watch', 'google', 'hotmail', 'outlook', 'mail']):
 
         # إذا الرابط مشبوه فعلاً (طويل جداً أو فيه علامات اختراق)
         if len(url) > 300 or "@" in url:
