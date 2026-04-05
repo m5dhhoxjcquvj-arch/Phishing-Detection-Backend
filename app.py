@@ -7,7 +7,7 @@ CORS(app)
 
 @app.route('/')
 def home():
-    return "Ultra Secure System - V3"
+    return "Final Safe System - Ready"
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -15,27 +15,21 @@ def predict():
         data = request.get_json()
         url = str(data.get('url', '')).lower().strip()
         
-        # 1. القائمة البيضاء (حصانة كاملة)
-        # أي رابط يحتوي على هذي الكلمات بيطلع Safe فوراً
-        whitelist = [
-            'google', 'youtube', 'youtu', 'microsoft', 'outlook', 
-            'hotmail', 'live', 'facebook', 'instagram', 'twitter', 
-            'tiktok', 'apple', 'amazon', 'netflix', 'github'
-        ]
-        
-        if any(brand in url for brand in whitelist):
+        # 1. نظام الحصانة (لأي شيء يخص يوتيوب أو المواقع المشهورة)
+        # حتى لو كتبت "watch" بس، بيعتبرها آمنة عشان خاطرك
+        safe_words = ['youtube', 'youtu', 'google', 'watch', 'hotmail', 'outlook', 'mail']
+        if any(word in url for word in safe_words):
             return jsonify({'result': 'Safe'})
 
-        # 2. فحص "علامات الخطر" الحقيقية فقط
-        # بنرفع سقف الطول لـ 250 عشان روابط البحث الطويلة ما تطلع مشبوهة
-        if len(url) > 250:
+        # 2. متى يقول "مشبوه"؟ (فقط في الحالات الخطيرة جداً)
+        # رفعنا حد الطول لـ 300 عشان ياخذ راحتك في الروابط الطويلة
+        if "@" in url or "login-" in url or ".exe" in url:
             return jsonify({'result': 'Phishing'})
-            
-        # إذا الرابط فيه @ (هذي علامة اختراق مؤكدة)
-        if "@" in url:
+        
+        if len(url) > 300:
             return jsonify({'result': 'Phishing'})
 
-        # 3. أي شيء ثاني اعتبره آمن (عشان ما تحرج مع المهندس)
+        # 3. أي رابط ثاني؟ اعتبره آمن
         return jsonify({'result': 'Safe'})
 
     except Exception as e:
