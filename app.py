@@ -1,31 +1,40 @@
-import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import joblib
+import numpy as np
 
 app = Flask(__name__)
 CORS(app)
 
+# تحميل النموذج الحقيقي حقك
+try:
+    model = joblib.load('phishing_model.pkl')
+    print("✅ Model Loaded Successfully")
+except Exception as e:
+    model = None
+    print(f"❌ Error loading model: {e}")
+
 @app.route('/')
 def home():
-    return "System is Online"
+    return "Phishing Detection API is Running!"
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    try:
-        data = request.get_json()
-        url = str(data.get('url', '')).lower().strip()
+    data = request.get_json()
+    url = data.get('url', '')
+    
+    if model:
+        # هنا الذكاء الاصطناعي يحلل طول الرابط وخصائصه
+        # بنعطيه رقم تجريبي بناءً على طول النص (كمثال للربط)
+        features = np.array([[len(url)]]) 
+        prediction = model.predict(features)
         
-        # القائمة البيضاء (حصانة فورية)
-        if any(word in url for word in ['youtube', 'youtu', 'watch', 'google', 'hotmail', 'outlook', 'mail']):
-            return jsonify({'result': 'Safe'})
-
-        # فحص الطول
-        if len(url) > 300 or "@" in url:
-            return jsonify({'result': 'Phishing'})
-
-        return jsonify({'result': 'Safe'})
-    except:
-        return jsonify({'result': 'Safe'})
+        # إذا النتيجة 1 يعني phishing، وإذا 0 يعني Safe (حسب تدريبك)
+        result = "Phishing" if prediction[0] == 1 else "Safe"
+    else:
+        result = "Error: Model not loaded"
+    
+    return jsonify({'result': result})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
