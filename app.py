@@ -1,31 +1,41 @@
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import urllib.parse
 
 app = Flask(__name__)
 CORS(app)
 
 @app.route('/')
 def home():
-    return "Final Security Engine is Live!"
+    return "Phishing Detector - Final Version"
 
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
         data = request.get_json()
-        # تحويل الرابط لحروف صغيرة وحذف أي مسافات أو رموز غريبة في الأطراف
-        url = str(data.get('url', '')).lower().strip()
+        raw_input = data.get('url', '')
         
-        # قائمة "الحصانة" - أي رابط يحتوي على هذي الكلمات آمن فوراً
-        # لاحظ أضفت 'youtube' و 'youtu' و 'google'
-        if any(word in url for word in ['youtube', 'youtu', 'google', 'tiktok', 'speedtest']):
-            return jsonify({'result': 'Safe'})
+        # 1. تنظيف الرابط من التشفير (مثلاً %20 يرجع مسافة)
+        # وتحويله لحروف صغيرة
+        url = urllib.parse.unquote(raw_input).lower().strip()
         
-        # إذا الرابط مجهول (مو من القائمة اللي فوق)
-        # نطبق عليه فحص الطول والرموز
-        if len(url) > 100 or url.count('?') > 1:
+        # 2. القائمة الذهبية (أول شيء ينفذه السيرفر)
+        # إذا لقى أي كلمة من هذي الكلمات، يعطي Safe فوراً ويسحب على الباقي
+        safe_words = ['youtube', 'youtu.be', 'google', 'tiktok', 'speedtest', 'facebook', 'instagram']
+        
+        for word in safe_words:
+            if word in url:
+                return jsonify({'result': 'Safe'})
+
+        # 3. فحص الروابط المجهولة (منطق أمني بسيط)
+        # إذا الرابط "غريب" جداً أو طويل بزيادة بدون ما يكون من المواقع المعروفة
+        suspicious_chars = ['@', '!!', 'login', 'verify', 'update-account']
+        
+        if any(char in url for char in suspicious_chars) or len(url) > 150:
             return jsonify({'result': 'Phishing'})
         
+        # الافتراضي لأي رابط طبيعي
         return jsonify({'result': 'Safe'})
 
     except Exception as e:
