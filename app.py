@@ -7,33 +7,27 @@ CORS(app)
 
 @app.route('/')
 def home():
-    return "API is Active and Smart!"
+    return "Final Test Version is Live!"
 
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
         data = request.get_json()
-        # تنظيف الرابط من المسافات والحروف الكبيرة
+        # تحويل الرابط لحروف صغيرة وحذف أي مسافات زائدة
         url = data.get('url', '').lower().strip()
         
-        print(f"Checking URL: {url}") # هذا بيظهر لك في الـ Logs حقت Render
-
-        # 1. القاعدة الذهبية: إذا الكلمة موجودة، الرابط آمن فوراً
-        # هذي الحركة تضمن إن يوتيوب وتيك توك وكل الكبار يضبطون
-        safe_keywords = ['youtube', 'youtu.be', 'google', 'tiktok', 'speedtest', 'instagram', 'facebook']
+        # القائمة الذهبية - بمجرد وجود الكلمة في الرابط يعتبر آمن
+        # أضفت لك كل الاحتمالات عشان ما يغلط
+        if 'youtube' in url or 'youtu.be' in url or 'google' in url or 'tiktok' in url or 'speedtest' in url:
+            return jsonify({'result': 'Safe'})
         
-        is_safe_keyword = any(keyword in url for keyword in safe_keywords)
+        # إذا الرابط ما فيه الكلمات اللي فوق، نطبق عليه فحص بسيط
+        # إذا فيه رموز غريبة كثير أو طويل بزيادة يعتبر مشبوه
+        if url.count('.') > 3 or len(url) > 100:
+            return jsonify({'result': 'Phishing'})
+        
+        return jsonify({'result': 'Safe'})
 
-        if is_safe_keyword:
-            result = "Safe"
-        # 2. فحص الروابط المشبوهة (المنطق الأمني)
-        elif len(url) > 80 or url.count('-') > 4 or url.count('.') > 4:
-            result = "Phishing"
-        else:
-            result = "Safe"
-
-        return jsonify({'result': result})
-    
     except Exception as e:
         return jsonify({'result': 'Error', 'message': str(e)})
 
