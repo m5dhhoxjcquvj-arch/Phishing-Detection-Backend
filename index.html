@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>فاحص الروابط الذكي</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: white; }
+        .card { background: white; color: #333; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center; width: 450px; }
+        h1 { color: #4a90e2; font-size: 28px; }
+        input { width: 100%; padding: 15px; margin: 20px 0; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+        button { background: #4a90e2; color: white; border: none; padding: 15px 30px; border-radius: 10px; cursor: pointer; font-size: 18px; width: 100%; transition: 0.3s; }
+        button:hover { background: #357abd; transform: translateY(-2px); }
+        #result { margin-top: 25px; padding: 15px; border-radius: 10px; font-weight: bold; display: none; }
+        .safe { background: #d4edda; color: #155724; }
+        .danger { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🔍 كاشف الاحتيال الإلكتروني</h1>
+        <p>مشروع التخرج - نظام كشف روابط الفيشينج</p>
+        <input type="text" id="urlInput" placeholder="ضع الرابط هنا لفحصه...">
+        <button onclick="checkURL()">بدء الفحص الذكي</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function checkURL() {
+            const url = document.getElementById('urlInput').value;
+            const resultDiv = document.getElementById('result');
+            if(!url) return;
+            
+            resultDiv.style.display = "block";
+            resultDiv.innerHTML = "جاري تحليل الرابط عبر الموديل...";
+            resultDiv.className = "";
+
+            setTimeout(() => {
+                // محاكاة منطق الذكاء الاصطناعي
+                if(url.includes("login") || url.includes("verify") || url.length > 30) {
+                    resultDiv.innerHTML = "❌ تنبيه: هذا الرابط مشبوه (Phishing)!";
+                    resultDiv.className = "danger";
+                } else {
+                    resultDiv.innerHTML = "✅ الرابط آمن للاستخدام.";
+                    resultDiv.className = "safe";
+                }
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
