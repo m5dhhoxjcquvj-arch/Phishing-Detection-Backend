@@ -1,51 +1,41 @@
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from urllib.parse import urlparse
 
 app = Flask(__name__)
 CORS(app)
 
 @app.route('/')
 def home():
-    return "Security Engine is Active!"
+    return "API is Active and Smart!"
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    data = request.get_json()
-    raw_url = data.get('url', '').lower().strip()
-    
-    # 1. تنظيف الرابط واستخراج اسم الموقع (Domain)
-    # هذي الخطوة تحول https://www.youtube.com/watch إلى youtube.com فقط
     try:
-        if not raw_url.startswith(('http://', 'https://')):
-            url_to_parse = 'http://' + raw_url
-        else:
-            url_to_parse = raw_url
+        data = request.get_json()
+        # تنظيف الرابط من المسافات والحروف الكبيرة
+        url = data.get('url', '').lower().strip()
         
-        domain = urlparse(url_to_parse).netloc
-        if domain.startswith('www.'):
-            domain = domain[4:]
-    except:
-        domain = raw_url
+        print(f"Checking URL: {url}") # هذا بيظهر لك في الـ Logs حقت Render
 
-    # 2. القائمة البيضاء الذكية (WhilteList)
-    # أي موقع ينتهي بهذي الدومينات يعتبر آمن فوراً
-    safe_list = ['youtube.com', 'google.com', 'google.sa', 'speedtest.net', 'microsoft.com', 'apple.com', 'twitter.com', 'x.com', 'facebook.com', 'instagram.com']
-    
-    is_safe = any(domain == s or domain.endswith('.' + s) for s in safe_list)
+        # 1. القاعدة الذهبية: إذا الكلمة موجودة، الرابط آمن فوراً
+        # هذي الحركة تضمن إن يوتيوب وتيك توك وكل الكبار يضبطون
+        safe_keywords = ['youtube', 'youtu.be', 'google', 'tiktok', 'speedtest', 'instagram', 'facebook']
+        
+        is_safe_keyword = any(keyword in url for keyword in safe_keywords)
 
-    if is_safe:
-        result = "Safe"
-    else:
-        # 3. منطق الفحص للروابط المجهولة (Heuristics)
-        # هنا السيرفر يشغل حواسه الأمنية
-        if len(raw_url) > 100 or raw_url.count('.') > 4 or "@" in raw_url:
+        if is_safe_keyword:
+            result = "Safe"
+        # 2. فحص الروابط المشبوهة (المنطق الأمني)
+        elif len(url) > 80 or url.count('-') > 4 or url.count('.') > 4:
             result = "Phishing"
         else:
             result = "Safe"
 
-    return jsonify({'result': result})
+        return jsonify({'result': result})
+    
+    except Exception as e:
+        return jsonify({'result': 'Error', 'message': str(e)})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
