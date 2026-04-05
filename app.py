@@ -1,31 +1,46 @@
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 CORS(app)
 
 @app.route('/')
 def home():
-    return "API is Running!"
+    return "Security Engine is Active!"
 
 @app.route('/predict', methods=['POST'])
 def predict():
     data = request.get_json()
-    url = data.get('url', '').lower() # نحول الرابط لحروف صغيرة عشان الفحص
+    raw_url = data.get('url', '').lower().strip()
     
-    # 1. القائمة البيضاء (الروابط الموثوقة 100%)
-    trusted_domains = ["youtube.com", "google.com", "gmail.com", "outlook.com", "microsoft.com", "apple.com"]
-    
-    # فحص إذا كان الرابط يحتوي على أي دومين موثوق
-    is_trusted = any(domain in url for domain in trusted_domains)
+    # 1. تنظيف الرابط واستخراج اسم الموقع (Domain)
+    # هذي الخطوة تحول https://www.youtube.com/watch إلى youtube.com فقط
+    try:
+        if not raw_url.startswith(('http://', 'https://')):
+            url_to_parse = 'http://' + raw_url
+        else:
+            url_to_parse = raw_url
+        
+        domain = urlparse(url_to_parse).netloc
+        if domain.startswith('www.'):
+            domain = domain[4:]
+    except:
+        domain = raw_url
 
-    if is_trusted:
+    # 2. القائمة البيضاء الذكية (WhilteList)
+    # أي موقع ينتهي بهذي الدومينات يعتبر آمن فوراً
+    safe_list = ['youtube.com', 'google.com', 'google.sa', 'speedtest.net', 'microsoft.com', 'apple.com', 'twitter.com', 'x.com', 'facebook.com', 'instagram.com']
+    
+    is_safe = any(domain == s or domain.endswith('.' + s) for s in safe_list)
+
+    if is_safe:
         result = "Safe"
     else:
-        # 2. هنا "منطق" الفحص للروابط الثانية (مؤقتاً للبروجكت)
-        # إذا الرابط طويل جداً أو فيه رموز غريبة نعتبره مشبوه
-        if len(url) > 50 or url.count('@') > 0 or url.count('-') > 3:
+        # 3. منطق الفحص للروابط المجهولة (Heuristics)
+        # هنا السيرفر يشغل حواسه الأمنية
+        if len(raw_url) > 100 or raw_url.count('.') > 4 or "@" in raw_url:
             result = "Phishing"
         else:
             result = "Safe"
