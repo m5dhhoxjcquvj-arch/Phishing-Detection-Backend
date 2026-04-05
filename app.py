@@ -7,35 +7,26 @@ CORS(app)
 
 @app.route('/')
 def home():
-    return "AI Detection System - Ready"
+    return "System is Online"
 
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
         data = request.get_json()
-        # تنظيف الرابط من المسافات وتحويله لحروف صغيرة
         url = str(data.get('url', '')).lower().strip()
         
-        # قائمة "الحصانة" - أي كلمة هنا تخلي الرابط آمن فوراً
-        # أضفت لك 'watch' و 'mail' عشان يوتيوب وهوتميل
-        safe_keywords = [
-            'youtube', 'youtu', 'google', 'gmail', 
-            'hotmail', 'outlook', 'live', 'microsoft', 
-            'tiktok', 'watch', 'mail'
-        ]
-
-        # فحص وجود الكلمات الآمنة
-        if any(word in url for word in safe_keywords):
+        # قائمة الحماية الفورية
+        safe_list = ['youtube', 'youtu', 'google', 'hotmail', 'outlook', 'microsoft', 'watch']
+        
+        if any(word in url for word in safe_list):
             return jsonify({'result': 'Safe'})
         
-        # منطق "الشك" للروابط الطويلة والمشبوهة
-        if len(url) > 120 or url.count('?') > 1:
+        if len(url) > 120:
             return jsonify({'result': 'Phishing'})
             
         return jsonify({'result': 'Safe'})
-
     except Exception as e:
-        return jsonify({'result': 'Error', 'message': str(e)})
+        return jsonify({'result': 'Error'})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
