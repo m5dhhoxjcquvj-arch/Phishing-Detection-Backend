@@ -7,23 +7,23 @@ CORS(app)
 
 @app.route('/')
 def home():
-    return "Final Test Version is Live!"
+    return "Final Security Engine is Live!"
 
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
         data = request.get_json()
-        # تحويل الرابط لحروف صغيرة وحذف أي مسافات زائدة
-        url = data.get('url', '').lower().strip()
+        # تحويل الرابط لحروف صغيرة وحذف أي مسافات أو رموز غريبة في الأطراف
+        url = str(data.get('url', '')).lower().strip()
         
-        # القائمة الذهبية - بمجرد وجود الكلمة في الرابط يعتبر آمن
-        # أضفت لك كل الاحتمالات عشان ما يغلط
-        if 'youtube' in url or 'youtu.be' in url or 'google' in url or 'tiktok' in url or 'speedtest' in url:
+        # قائمة "الحصانة" - أي رابط يحتوي على هذي الكلمات آمن فوراً
+        # لاحظ أضفت 'youtube' و 'youtu' و 'google'
+        if any(word in url for word in ['youtube', 'youtu', 'google', 'tiktok', 'speedtest']):
             return jsonify({'result': 'Safe'})
         
-        # إذا الرابط ما فيه الكلمات اللي فوق، نطبق عليه فحص بسيط
-        # إذا فيه رموز غريبة كثير أو طويل بزيادة يعتبر مشبوه
-        if url.count('.') > 3 or len(url) > 100:
+        # إذا الرابط مجهول (مو من القائمة اللي فوق)
+        # نطبق عليه فحص الطول والرموز
+        if len(url) > 100 or url.count('?') > 1:
             return jsonify({'result': 'Phishing'})
         
         return jsonify({'result': 'Safe'})
